@@ -13,6 +13,23 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/', function ()
+{
+    return View::make('feed');
+});
+
+Route::get('feed', function ()
+{
+    return View::make('feed');
+});
+
+Route::get('lot/{lotId}', 'App\Http\Controllers\LotController@view')
+    -> where('lotId', '(.*)');
+
+Route::get('profile/{profileId}', 'App\Http\Controllers\ProfileController@view')
+    -> where('lotId', '(.*)');
+
+Route::get('winners', function ()
+{
+    return View::make('winners');
 });
