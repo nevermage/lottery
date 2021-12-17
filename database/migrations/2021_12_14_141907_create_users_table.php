@@ -20,8 +20,8 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->string('image_path');
             $table->integer('role_id');
-            $table->boolean('is_active');
-            $table->rememberToken();
+            $table->dateTime('email_verified_at')->nullable();
+            $table->string('api_token', 60);
             $table->timestamps();
         });
     }

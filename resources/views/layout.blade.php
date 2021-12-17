@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Feed</title>
     <link rel="stylesheet" href="/styles/style.css">
-    <script src="js/login.js"></script>
+    <script src="/js/login.js"></script>
 </head>
 <body>
 <div id="loginFormBackground" class="loginFormBackground" onclick="closeLoginForm()"></div>

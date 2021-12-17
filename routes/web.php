@@ -33,3 +33,7 @@ Route::get('winners', function ()
 {
     return View::make('winners');
 });
+
+Auth::routes(['vetify' => true]);
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
