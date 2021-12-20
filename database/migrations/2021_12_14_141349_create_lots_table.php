@@ -16,12 +16,12 @@ class CreateLotsTable extends Migration
         Schema::create('lots', function (Blueprint $table) {
             $table->id();
             $table->integer('creator_id');
-            $table->integer('winner_id');
+            $table->integer('winner_id')->nullable();
             $table->string('name');
-            $table->string('image_path');
-            $table->text('description');
+            $table->string('image_path')->nullable();
+            $table->text('description')->nullable();
             $table->string('status');
-            $table->dateTime('roll_time');
+            $table->dateTime('roll_time')->nullable();
             $table->timestamps();
         });
     }
