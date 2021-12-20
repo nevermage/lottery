@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 //Use User Model
 use App\Models\User;
 
@@ -16,5 +14,11 @@ class UserController extends Controller
     {
         $users = User::get();
         return UserResource::collection($users);
+    }
+
+    public function getUser($id)
+    {
+        $user = User::get()->where('id', $id);
+        return UserResource::collection($user);
     }
 }
