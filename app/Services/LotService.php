@@ -21,6 +21,7 @@ class LotService
             from lots
             where lots.id = $id
         ;");
+
         return response()->json($lot, HttpResponse::HTTP_OK);
     }
 
@@ -36,6 +37,7 @@ class LotService
             on(lots.creator_id = users.id)
             where status = "active"
         ;');
+
         return response()->json($lots, HttpResponse::HTTP_OK);
     }
 
@@ -48,27 +50,35 @@ class LotService
                 HttpResponse::HTTP_UNAUTHORIZED
             );
         }
+
         $userLots = LotUser
             ::where('user_id', '=', $uid)
             ->count();
+
         if ($userLots >= 5) {
-            return ['data' => 'user is already joined to 5 lotteries'];
+            return response()->json(
+                ['data' => 'User is already joined to 5 lotteries'],
+                HttpResponse::HTTP_UNAUTHORIZED
+            );
         }
+
         $ifJoined = LotUser
             ::where('lot_id', '=', $lid)
             ->where('user_id', '=', $uid)
             ->first();
+
         if ($ifJoined == null) {
             LotUser::create([
                 'lot_id' => $lid,
                 'user_id' => $uid
             ]);
-
-            return ['data' => 'user was added'];
+            return response()->json(
+                ['data' => 'User was added'],
+                HttpResponse::HTTP_UNAUTHORIZED
+            );
         }
-        return ['data' => 'user already joined'];
 
-        return response()->json(['data' => 'User joined'], HttpResponse::HTTP_OK);
+        return response()->json(['data' => 'User already joined'], HttpResponse::HTTP_OK);
     }
 
 }
