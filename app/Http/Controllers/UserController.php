@@ -2,23 +2,17 @@
 
 namespace App\Http\Controllers;
 
-//Use User Model
-use App\Models\User;
-
-//Use Resources to convert into json
-use App\Http\Resources\UserResource as UserResource;
+use App\Services\UserService;
 
 class UserController extends Controller
 {
-    public function getUsers()
+    public function getById($id)
     {
-        $users = User::get();
-        return UserResource::collection($users);
+        return UserService::getUser($id);
     }
 
-    public function getUser($id)
+    public function getAll()
     {
-        $user = User::get()->where('id', $id);
-        return UserResource::collection($user);
+        return UserService::getAll();
     }
 }
