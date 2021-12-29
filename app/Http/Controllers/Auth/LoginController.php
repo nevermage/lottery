@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Services\LotService;
 use Illuminate\Http\Request;
 use App\Services\AuthenticateService;
 
@@ -23,7 +22,17 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        return AuthenticateService::login();
+        return AuthenticateService::login($request);
+    }
+
+    public function checkUser(Request $request)
+    {
+        return AuthenticateService::checkuser($request);
+    }
+
+    public function logout()
+    {
+        return AuthenticateService::logout();
     }
 
 }
