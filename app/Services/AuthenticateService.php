@@ -122,10 +122,14 @@ class AuthenticateService
         return null;
     }
 
-    public static function checkUser($request, $returnType='array')
+    public static function checkUser($request, $returnType)
     {
         $token = $request->cookie('token');
         if ($token == null) {
+            if ($returnType == 'array') {
+                return null;
+            }
+
             return response()->json(
                 ['data' => 'UnAuthenticated'],
                 HttpResponse::HTTP_UNAUTHORIZED
@@ -134,7 +138,7 @@ class AuthenticateService
         return self::loginViaToken($token, $returnType ?: 'object');
     }
 
-    public static function loginViaToken($token, $returnType='object')
+    public static function loginViaToken($token, $returnType)
     {
         $credentials = JWT::decode($token, "secret", array('HS256'));
         $user = User::get()->where('email', $credentials->email)
