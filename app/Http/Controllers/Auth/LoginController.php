@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\LotService;
 use Illuminate\Http\Request;
 use App\Services\AuthenticateService;
+use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends Controller
 {
@@ -22,7 +23,11 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        return AuthenticateService::login($request);
+        $response = AuthenticateService::login($request);
+        if (is_string($response)) {
+            return response()->json($response, Response::HTTP_OK);
+        }
+        return response()->json($response, Response::HTTP_UNAUTHORIZED);
     }
 
     public function checkUser(Request $request)

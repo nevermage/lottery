@@ -2,12 +2,28 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use App\Models\Lot;
 use Illuminate\Support\Facades\DB;
 use App\Services\AuthenticateService;
 use App\Models\LotUser;
 
 class LotService
 {
+
+    public static function createdBy($id)
+    {
+        $lots = Lot::get()->where('creator_id', $id)
+            ->whereIn('status', ['active', 'expired']);
+        return $lots;
+    }
+
+    public static function wonBy($id)
+    {
+        $lots = Lot::get()->where('winner_id', $id)
+            ->whereIn('status', ['active', 'expired']);
+        return $lots;
+    }
 
     public static function getById($id)
     {
@@ -22,7 +38,7 @@ class LotService
             where lots.id = $id
         ;");
 
-        return response()->json($lot, HttpResponse::HTTP_OK);
+        return $lot;
     }
 
     public static function getActive()
@@ -38,28 +54,39 @@ class LotService
             where status = "active"
         ;');
 
-        return response()->json($lots, HttpResponse::HTTP_OK);
+        return $lots;
     }
 
     public static function joinLot($request, $lid)
     {
         $uid = AuthenticateService::getUserId($request);
         if ($uid == null) {
-            return response()->json(
-                ['data' => 'UnAuthenticated'],
-                HttpResponse::HTTP_UNAUTHORIZED
-            );
+            return ['data' => 'UnAuthenticated'];
         }
 
+        $user = User::where('id', $uid)->first();
+        if ($user['email_verified_at'] == null) {
+            return ['data' => 'User has not verified email'];
+        }
         $userLots = LotUser
             ::where('user_id', '=', $uid)
             ->count();
 
         if ($userLots >= 5) {
-            return response()->json(
-                ['data' => 'User is already joined to 5 lotteries'],
-                HttpResponse::HTTP_UNAUTHORIZED
-            );
+            return ['data' => 'User is already joined to 5 lotteries'];
+        }
+
+        $lot = Lot::where('id', $lid)->first();
+        if ($lot == null) {
+            return ['data' => 'lot is not exists'];
+        }
+
+        if ($lot['creator_id'] == $uid) {
+            return ['data' => 'Creator can not join to own lot'];
+        }
+
+        if ($lot['status'] != 'active') {
+            return ['data' => 'Lot is not active'];
         }
 
         $ifJoined = LotUser
@@ -72,13 +99,72 @@ class LotService
                 'lot_id' => $lid,
                 'user_id' => $uid
             ]);
-            return response()->json(
-                ['data' => 'User was added'],
-                HttpResponse::HTTP_UNAUTHORIZED
-            );
+            return null;
         }
 
-        return response()->json(['data' => 'User already joined'], HttpResponse::HTTP_OK);
+        return ['data' => 'User already joined'];
     }
 
+
+    public static function create($request)
+    {
+        $user = AuthenticateService::checkUser($request, 'array');
+        if ($user == null) {
+            return null;
+        }
+        if ($user['email_verified_at'] == null) {
+            return ['data' => 'User has not verified email'];
+        }
+
+        $uid = $user['id'];
+        $request->validate([
+            'name' => 'required|min:5',
+            'image_path' => 'min:5',
+            'description' => 'min:15',
+        ]);
+
+        $lotData = [
+            'name' => $request['name'],
+            'creator_id' => $uid,
+            'status' => 'unmoderated',
+            'description' => $request['description'] ?: null,
+            'image_path' => $request['image_path'] ?: null,
+        ];
+
+        Lot::create($lotData);
+
+        return ['data' => 'Lot was created'];
+    }
+
+    public static function update($request, $id)
+    {
+        $uid = AuthenticateService::getUserId($request);
+        if (!$uid) {
+            return ['data' => 'UnAuthenticated'];
+        }
+        $request->validate([
+            'name' => 'min:5',
+            'image_path' => 'min:5',
+            'description' => 'min:15',
+            'roll_time' => 'date_format:Y-m-d H:i:s|after:tomorrow'
+        ]);
+        $lot = Lot::findOrFail($id);
+
+        if ($lot['creator_id'] != $uid) {
+            return ['data' => 'user is not owner of lot'];
+        }
+        if ($lot['status'] != 'accepted') {
+            return ['data' => 'unable to update lot'];
+        }
+
+        $data = $request->all();
+        if (isset($data['roll_time'])) {
+            $data += ['status' => 'active'];
+            //add scheduled task to roll winner
+        }
+
+        $lot->update($data);
+
+        return null;
+    }
 }
