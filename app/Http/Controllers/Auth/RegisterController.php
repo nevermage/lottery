@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\AuthenticateService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class RegisterController extends Controller
 {
@@ -21,12 +22,20 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-        return AuthenticateService::register($request);
+        $response = AuthenticateService::register($request);
+        if ($response) {
+            return response()->json($response,Response::HTTP_UNAUTHORIZED);
+        }
+        return response()->json(['data' => 'Confirm your email!'],Response::HTTP_OK);
     }
 
     public function verify(Request $request)
     {
-        return AuthenticateService::verifyEmail($request);
+        $response = AuthenticateService::verifyEmail($request);
+        if (is_object($response)) {
+            return $response;
+        }
+        return response()->json($response,Response::HTTP_UNAUTHORIZED);
     }
 
 }

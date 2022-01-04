@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Verification;
 use Illuminate\Support\Carbon;
-use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateService
 {
@@ -27,19 +27,16 @@ class AuthenticateService
     {
         $user = User::get()->where('email', $request['email'])->first();
         if ($user == null) {
-            return response()->json(
-                ['data' => 'This email dont match our records'],
-                HttpResponse::HTTP_UNAUTHORIZED
-            );
+            return ['data' => 'This email dont match our records'];
         }
         if ($user['password'] == $request['password']) {
             $jwt = JWT::encode($request->all(), "secret");
 
             setcookie("token", $jwt, time()+30*24*60*60);
 
-            return response()->json(['data' => $jwt], HttpResponse::HTTP_OK);
+            return $jwt;
         }
-        return response()->json(['data' => 'Password is incorrect'], HttpResponse::HTTP_UNAUTHORIZED);
+        return ['data' => 'Password is incorrect'];
     }
 
     public static function registerValidation($request)
@@ -53,10 +50,7 @@ class AuthenticateService
 
         $user = User::get()->where('email', $request['email'])->first();
         if ($user != null) {
-            return response()->json(
-                ['data' => 'This email is already taken'],
-                HttpResponse::HTTP_UNAUTHORIZED
-            );
+            return ['data' => 'This email is already taken'];
         }
         return true;
     }
@@ -79,23 +73,17 @@ class AuthenticateService
 
         Mail::to($request['email'])->send(new Verification($hash));
 
-        return response()->json(['data' => 'Confirm your email!'], HttpResponse::HTTP_OK);
+        return null;
     }
 
     public static function verifyEmail($request)
     {
         $user = User::get()->where('api_token', $request['hash'])->first();
         if ($user == null) {
-            return response()->json(
-                ['data' => 'No users with this token'],
-                HttpResponse::HTTP_UNAUTHORIZED
-            );
+            return ['data' => 'No users with this token'];
         }
         if ($user['email_verified_at'] != null) {
-            return response()->json(
-                ['data' => 'User is already verified'],
-                HttpResponse::HTTP_UNAUTHORIZED
-            );
+            return ['data' => 'User is already verified'];
         }
         $user->email_verified_at = Carbon::now();
         $user->save();
@@ -108,7 +96,7 @@ class AuthenticateService
         setcookie("token", null, 0);
         return response()->json(
             ['data' => 'User logged out'],
-            HttpResponse::HTTP_OK
+            Response::HTTP_OK
         );
     }
 
@@ -122,7 +110,17 @@ class AuthenticateService
         return null;
     }
 
-    public static function checkUser($request, $returnType)
+    public static function getUserRole($request)
+    {
+        $user = self::checkUser($request, 'array');
+
+        if (is_object($user)) {
+            return $user['role_id'];
+        }
+        return null;
+    }
+
+    public static function checkUser($request, $returnType='object')
     {
         $token = $request->cookie('token');
         if ($token == null) {
@@ -132,13 +130,13 @@ class AuthenticateService
 
             return response()->json(
                 ['data' => 'UnAuthenticated'],
-                HttpResponse::HTTP_UNAUTHORIZED
+                Response::HTTP_UNAUTHORIZED
             );
         }
         return self::loginViaToken($token, $returnType ?: 'object');
     }
 
-    public static function loginViaToken($token, $returnType)
+    public static function loginViaToken($token, $returnType='object')
     {
         $credentials = JWT::decode($token, "secret", array('HS256'));
         $user = User::get()->where('email', $credentials->email)
@@ -147,7 +145,7 @@ class AuthenticateService
         if ($user == null) {
             return response()->json(
                 ['data' => 'UnAuthenticated'],
-                HttpResponse::HTTP_UNAUTHORIZED
+                Response::HTTP_UNAUTHORIZED
             );
         }
         if ($user['password'] == $credentials->password) {
@@ -157,7 +155,7 @@ class AuthenticateService
             if ($returnType == 'object') {
                 return response()->json(
                     ['data' => $user],
-                    HttpResponse::HTTP_OK
+                    Response::HTTP_OK
                 );
             }
             if ($returnType == 'array') {
@@ -166,7 +164,7 @@ class AuthenticateService
         }
         return response()->json(
             ['data' => 'UnAuthenticated'],
-            HttpResponse::HTTP_UNAUTHORIZED
+            Response::HTTP_UNAUTHORIZED
         );
     }
 
