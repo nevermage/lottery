@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Services\LotService;
 use Illuminate\Http\Request;
 use App\Services\AuthenticateService;
 use Symfony\Component\HttpFoundation\Response;

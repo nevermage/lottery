@@ -77,4 +77,9 @@ class LotController extends Controller
             Response::HTTP_OK
         );
     }
+
+    public function now()
+    {
+        return LotService::rollWinner();
+    }
 }
