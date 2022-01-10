@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Mail\WinNotification;
 use App\Models\User;
 use App\Models\Lot;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Services\AuthenticateService;
 use App\Models\LotUser;
+use Illuminate\Support\Facades\Mail;
 
 class LotService
 {
@@ -167,4 +170,32 @@ class LotService
 
         return null;
     }
+
+    public static function rollWinner()
+    {
+        $now = Carbon::parse(Carbon::now())->startOfMinute()->toDateTimeString();
+
+        DB::update("update lots set winner_id="
+            . "(select user_id from lot_user where lot_id = lots.id order by rand() limit 1),"
+            . "status='expired'"
+            . " where roll_time = '$now';");
+
+        $lots = Lot::where('roll_time', '=', $now)
+            ->join('users', 'lots.winner_id', '=', 'users.id')
+            ->get([
+                'users.name as winner',
+                'lots.name as name',
+                'lots.id',
+                'email',
+            ])
+            ->toArray();
+
+        foreach ($lots as $lot) {
+            Mail::to($lot['email'])
+                ->send(new WinNotification($lot['winner'], $lot['id'], $lot['name']));
+        }
+
+        return 0;
+    }
+
 }

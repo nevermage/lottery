@@ -77,4 +77,5 @@ class LotController extends Controller
             Response::HTTP_OK
         );
     }
+
 }
