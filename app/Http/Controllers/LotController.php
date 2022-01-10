@@ -78,8 +78,4 @@ class LotController extends Controller
         );
     }
 
-    public function now()
-    {
-        return LotService::rollWinner();
-    }
 }

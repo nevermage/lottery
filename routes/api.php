@@ -32,7 +32,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('lot/{id}', 'App\Http\Controllers\LotController@getById');
     Route::post('create', 'App\Http\Controllers\LotController@create');
     Route::put('update/{id}', 'App\Http\Controllers\LotController@update');
-    Route::get('now', 'App\Http\Controllers\LotController@now');
 
 });
 

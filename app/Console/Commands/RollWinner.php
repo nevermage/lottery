@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Services\LotService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class RollWinner extends Command
 {
@@ -20,7 +19,7 @@ class RollWinner extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Rolls a random winner for lots and sends email notification';
 
     /**
      * Create a new command instance.
