@@ -122,7 +122,7 @@ class AuthenticateService
 
     public static function checkUser($request, $returnType='object')
     {
-        $token = $request->cookie('token');
+        $token = $request['token'];
 
         if ($token == null) {
             if ($returnType == 'array') {
