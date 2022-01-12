@@ -122,7 +122,7 @@ class AuthenticateService
 
     public static function checkUser($request, $returnType='object')
     {
-        $token = $request['token'];
+        $token = $request->bearerToken();
 
         if ($token == null) {
             if ($returnType == 'array') {
