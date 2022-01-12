@@ -67,10 +67,26 @@ class LotService
             return ['data' => 'UnAuthenticated'];
         }
 
+        $validationData = self::joinLotValidation($uid, $lid);
+        if ($validationData != null) {
+            return $validationData;
+        }
+
+        LotUser::create([
+            'lot_id' => $lid,
+            'user_id' => $uid
+        ]);
+
+        return null;
+    }
+
+    public static function joinLotValidation($uid, $lid)
+    {
         $user = User::where('id', $uid)->first();
         if ($user['email_verified_at'] == null) {
             return ['data' => 'User has not verified email'];
         }
+
         $userLots = LotUser
             ::where('user_id', '=', $uid)
             ->count();
@@ -97,17 +113,12 @@ class LotService
             ->where('user_id', '=', $uid)
             ->first();
 
-        if ($ifJoined == null) {
-            LotUser::create([
-                'lot_id' => $lid,
-                'user_id' => $uid
-            ]);
-            return null;
+        if ($ifJoined != null) {
+            return ['data' => 'User already joined'];
         }
 
-        return ['data' => 'User already joined'];
+        return null;
     }
-
 
     public static function create($request)
     {
