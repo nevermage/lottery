@@ -19,6 +19,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('verify', 'App\Http\Controllers\Auth\RegisterController@verify');
     Route::post('login', 'App\Http\Controllers\Auth\LoginController@login');
     Route::post('join/{id}', 'App\Http\Controllers\LotController@joinLot');
+    Route::post('password-reset-mail', 'App\Http\Controllers\Auth\LoginController@passwordResetRequestMail');
+    Route::post('password-reset', 'App\Http\Controllers\Auth\LoginController@passwordReset');
+
 
     Route::get('check-user', 'App\Http\Controllers\Auth\LoginController@checkUser');
     Route::get('users', 'App\Http\Controllers\UserController@getAll');

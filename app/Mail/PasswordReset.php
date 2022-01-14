@@ -7,11 +7,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class Verification extends Mailable
+class PasswordReset extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $hash;
+    public $token;
     /**
      * Create a new message instance.
      *
@@ -19,7 +19,7 @@ class Verification extends Mailable
      */
     public function __construct($data)
     {
-        $this->hash = $data;
+        $this->token = $data;
     }
 
     /**
@@ -30,7 +30,7 @@ class Verification extends Mailable
     public function build()
     {
         return $this->from('SomeLottery@gmail.com')
-            ->view('email.verification')
-            ->with('hash', $this->hash);
+            ->view('email.passwordReset')
+            ->with('token', $this->token);
     }
 }
