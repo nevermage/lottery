@@ -19,7 +19,7 @@ class Admin
     public function handle(Request $request, Closure $next)
     {
         $roleId = AuthenticateService::getUserRole($request);
-        if ($roleId == 2) {
+        if ($roleId === AuthenticateService::AdminRoleId) {
             return $next($request);
         }
         return response()->json(

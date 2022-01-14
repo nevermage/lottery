@@ -4,21 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Services\UserService;
 use Symfony\Component\HttpFoundation\Response;
-
+use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
 {
-    public function getById($id)
+    public function getById(int $id): JsonResponse
     {
-        return UserService::getUser($id);
+        $user = UserService::getUser($id);
+        return response()->json($user, Response::HTTP_OK);
     }
 
-    public function getAll()
+    public function getAll(): JsonResponse
     {
-        return UserService::getAll();
+        $users = UserService::getAll();
+        return response()->json($users, Response::HTTP_OK);
+
     }
 
-    public function winners()
+    public function winners(): JsonResponse
     {
         $winners = UserService::winners();
         return response()->json($winners, Response::HTTP_OK);

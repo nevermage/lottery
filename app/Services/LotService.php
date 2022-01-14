@@ -5,32 +5,32 @@ namespace App\Services;
 use App\Mail\WinNotification;
 use App\Models\User;
 use App\Models\Lot;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Services\AuthenticateService;
 use App\Models\LotUser;
 use Illuminate\Support\Facades\Mail;
 
 class LotService
 {
 
-    public static function createdBy($id)
+    public static function createdBy(int $id)
     {
-        $lots = Lot::get()->where('creator_id', $id)
-            ->whereIn('status', ['active', 'expired']);
-        return $lots;
+        return Lot::get()->where('creator_id', $id)
+            ->whereIn('status', ['active', 'expired'])
+            ->toArray();
     }
 
-    public static function wonBy($id)
+    public static function wonBy(int $id)
     {
-        $lots = Lot::get()->where('winner_id', $id)
-            ->whereIn('status', ['active', 'expired']);
-        return $lots;
+        return Lot::get()->where('winner_id', $id)
+            ->whereIn('status', ['active', 'expired'])
+            ->toArray();
     }
 
-    public static function getById($id)
+    public static function getById(int $id): array
     {
-        $lot = DB::select("
+        return DB::select("
             select
                 lots.id, lots.name ,
                 (select name from users where id = creator_id) as creator,
@@ -40,35 +40,30 @@ class LotService
             from lots
             where lots.id = $id
         ;");
-
-        return $lot;
     }
 
-    public static function getActive()
+    public static function getActive(): array
     {
-        $lots = DB::select('
-            select
-                lots.id, lots.name ,
-                users.name as creator,
-                lots.image_path, description,
-                roll_time
-            from lots join users
-            on(lots.creator_id = users.id)
-            where status = "active"
-        ;');
-
-        return $lots;
+        return DB::table('lots')
+            ->join('users','lots.creator_id','=','users.id')
+            ->where('lots.status', '=', 'active')
+            ->get(['lots.id', 'lots.name',
+                'users.name as creator',
+                'lots.image_path', 'description',
+                'roll_time'])
+            ->toArray()
+            ;
     }
 
-    public static function joinLot($request, $lid)
+    public static function joinLot(Request $request, int $lid): array
     {
         $uid = AuthenticateService::getUserId($request);
-        if ($uid == null) {
+        if ($uid === null) {
             return ['data' => 'UnAuthenticated'];
         }
 
         $validationData = self::joinLotValidation($uid, $lid);
-        if ($validationData != null) {
+        if (!array_key_exists('validated', $validationData)) {
             return $validationData;
         }
 
@@ -77,13 +72,13 @@ class LotService
             'user_id' => $uid
         ]);
 
-        return null;
+        return ['added' => true];
     }
 
-    public static function joinLotValidation($uid, $lid)
+    private static function joinLotValidation(int $uid, int $lid): array
     {
         $user = User::where('id', $uid)->first();
-        if ($user['email_verified_at'] == null) {
+        if ($user['email_verified_at'] === null) {
             return ['data' => 'User has not verified email'];
         }
 
@@ -96,15 +91,15 @@ class LotService
         }
 
         $lot = Lot::where('id', $lid)->first();
-        if ($lot == null) {
+        if ($lot === null) {
             return ['data' => 'lot is not exists'];
         }
 
-        if ($lot['creator_id'] == $uid) {
+        if ($lot['creator_id'] === $uid) {
             return ['data' => 'Creator can not join to own lot'];
         }
 
-        if ($lot['status'] != 'active') {
+        if ($lot['status'] !== 'active') {
             return ['data' => 'Lot is not active'];
         }
 
@@ -117,29 +112,38 @@ class LotService
             return ['data' => 'User already joined'];
         }
 
-        return null;
+        return ['validated' => true];
     }
 
-    public static function create($request)
+    private static function createValidation(Request $request): array
     {
-        $user = AuthenticateService::checkUser($request, 'array');
-        if ($user == null) {
-            return null;
+        $user = AuthenticateService::checkUser($request);
+        if (array_key_exists('data', $user)) {
+            return $user;
         }
-        if ($user['email_verified_at'] == null) {
+        if ($user['email_verified_at'] === null) {
             return ['data' => 'User has not verified email'];
         }
 
-        $uid = $user['id'];
         $request->validate([
             'name' => 'required|min:5',
             'image_path' => 'min:5',
             'description' => 'min:15',
         ]);
 
+        return ['validated' => true];
+    }
+
+    public static function create(Request $request): array
+    {
+        $validationResponse = self::createValidation($request);
+        if (!array_key_exists('validated', $validationResponse)) {
+            return $validationResponse;
+        }
+
         $lotData = [
             'name' => $request['name'],
-            'creator_id' => $uid,
+            'creator_id' => AuthenticateService::getUserId($request),
             'status' => 'unmoderated',
             'description' => $request['description'] ?: null,
             'image_path' => $request['image_path'] ?: null,
@@ -150,7 +154,7 @@ class LotService
         return ['data' => 'Lot was created'];
     }
 
-    public static function update($request, $id)
+    private static function updateValidation(Request $request, int $id): array
     {
         $uid = AuthenticateService::getUserId($request);
         if (!$uid) {
@@ -162,24 +166,32 @@ class LotService
             'description' => 'min:15',
             'roll_time' => 'date_format:Y-m-d H:i:s|after:tomorrow'
         ]);
-        $lot = Lot::findOrFail($id);
-
-        if ($lot['creator_id'] != $uid) {
+        $lot = Lot::findOrFail($id)->toArray();
+        if ($lot['creator_id'] !== $uid) {
             return ['data' => 'user is not owner of lot'];
         }
-        if ($lot['status'] != 'accepted') {
+        if ($lot['status'] !== 'accepted') {
             return ['data' => 'unable to update lot'];
+        }
+
+        return ['validated' => true];
+    }
+
+    public static function update(Request $request, int $id): array
+    {
+        $validationResponse = self::updateValidation($request, $id);
+        if (!array_key_exists('validated', $validationResponse)) {
+            return $validationResponse;
         }
 
         $data = $request->all();
         if (isset($data['roll_time'])) {
             $data += ['status' => 'active'];
-            //add scheduled task to roll winner
         }
 
-        $lot->update($data);
+        Lot::findOrFail($id)->update($data);
 
-        return null;
+        return ['updated' => true];
     }
 
     public static function rollWinner()
@@ -206,7 +218,6 @@ class LotService
                 ->send(new WinNotification($lot['winner'], $lot['id'], $lot['name']));
         }
 
-        return 0;
     }
 
 }
