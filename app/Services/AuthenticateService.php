@@ -21,7 +21,7 @@ class AuthenticateService
             'email' => 'required|email',
             'password' => 'required|min:8',
         ]);
-        return AuthenticateService::loginAttempt($request);
+        return self::loginAttempt($request);
     }
 
 
@@ -55,7 +55,7 @@ class AuthenticateService
 
     public static function register(Request $request): array
     {
-        $registerCheck = AuthenticateService::registerValidation($request);
+        $registerCheck = self::registerValidation($request);
         if (!array_key_exists('registered', $registerCheck)) {
             return $registerCheck;
         }
