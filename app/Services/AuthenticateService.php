@@ -4,42 +4,39 @@ namespace App\Services;
 
 use App\Models\User;
 use Firebase\JWT\JWT;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Verification;
 use Illuminate\Support\Carbon;
-use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateService
 {
+    const AdminRoleId = 2;
 
-    public static function login($request)
+    public static function login(Request $request): array
     {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:8',
         ]);
-        return AuthenticateService::LoginAttempt($request);
+        return AuthenticateService::loginAttempt($request);
     }
 
 
-    public static function loginAttempt($request)
+    private static function loginAttempt(Request $request): array
     {
-        $user = User::get()->where('email', $request['email'])->first();
-        if ($user == null) {
+        $user = User::get()->where('email', $request->email)->first();
+        if ($user === null) {
             return ['data' => 'This email dont match our records'];
         }
-        if ($user['password'] == $request['password']) {
-            $jwt = JWT::encode($request->all(), "secret");
-
-            setcookie("token", $jwt, time()+30*24*60*60);
-
-            return $jwt;
+        if ($user['password'] === $request->password) {
+            return ['token' => JWT::encode($request->all(), "secret")];
         }
         return ['data' => 'Password is incorrect'];
     }
 
-    public static function registerValidation($request)
+    private static function registerValidation(Request $request): array
     {
         $request->validate([
             'email' => 'required|email',
@@ -52,13 +49,13 @@ class AuthenticateService
         if ($user != null) {
             return ['data' => 'This email is already taken'];
         }
-        return true;
+        return ['registered' => true];
     }
 
-    public static function register($request)
+    public static function register(Request $request): array
     {
         $registerCheck = AuthenticateService::registerValidation($request);
-        if ($registerCheck !== true) {
+        if (!array_key_exists('registered', $registerCheck)) {
             return $registerCheck;
         }
 
@@ -73,13 +70,13 @@ class AuthenticateService
 
         Mail::to($request['email'])->send(new Verification($hash));
 
-        return null;
+        return $registerCheck;
     }
 
-    public static function verifyEmail($request)
+    public static function verifyEmail(Request $request): array
     {
         $user = User::get()->where('api_token', $request['hash'])->first();
-        if ($user == null) {
+        if ($user === null) {
             return ['data' => 'No users with this token'];
         }
         if ($user['email_verified_at'] != null) {
@@ -88,85 +85,57 @@ class AuthenticateService
         $user->email_verified_at = Carbon::now();
         $user->save();
 
-        return redirect('/');
+        return ['confirmed' => true];
     }
 
-    public static function logout()
+    public static function getUserId(Request $request): ?int
     {
-        setcookie("token", null, 0);
-        return response()->json(
-            ['data' => 'User logged out'],
-            Response::HTTP_OK
-        );
-    }
+        $user = self::checkUser($request);
 
-    public static function getUserId($request)
-    {
-        $user = self::checkUser($request, 'array');
-
-        if (is_object($user)) {
+        if (!array_key_exists('data', $user)) {
             return $user['id'];
         }
         return null;
     }
 
-    public static function getUserRole($request)
+    public static function getUserRole(Request $request): ?int
     {
-        $user = self::checkUser($request, 'array');
+        $user = self::checkUser($request);
 
-        if (is_object($user)) {
+        if (!array_key_exists('data', $user)) {
             return $user['role_id'];
         }
         return null;
     }
 
-    public static function checkUser($request, $returnType='object')
+    public static function checkUser(Request $request): array
     {
         $token = $request->bearerToken();
 
-        if ($token == null) {
-            if ($returnType == 'array') {
-                return null;
-            }
-
-            return response()->json(
-                ['data' => 'UnAuthenticated'],
-                Response::HTTP_UNAUTHORIZED
-            );
+        if ($token === null) {
+            return ['data' => 'UnAuthenticated'];
         }
-        return self::loginViaToken($token, $returnType ?: 'object');
+        return self::loginViaToken($token);
     }
 
-    public static function loginViaToken($token, $returnType='object')
+    private static function loginViaToken(string $token): array
     {
         $credentials = JWT::decode($token, "secret", array('HS256'));
         $user = User::get()->where('email', $credentials->email)
             ->where('password', $credentials->password)
-            ->first();
-        if ($user == null) {
-            return response()->json(
-                ['data' => 'UnAuthenticated'],
-                Response::HTTP_UNAUTHORIZED
-            );
+            ->first()
+            ->toArray();
+
+        if ($user === null) {
+            return ['data' => 'UnAuthenticated'];
         }
-        if ($user['password'] == $credentials->password) {
+        if ($user['password'] === $credentials->password) {
             unset($user['password']);
             unset($user['api_token']);
-            setcookie("token", $token, time()+30*24*60*60);
-            if ($returnType == 'object') {
-                return response()->json(
-                    ['data' => $user],
-                    Response::HTTP_OK
-                );
-            }
-            if ($returnType == 'array') {
-                return $user;
-            }
+
+            return $user;
         }
-        return response()->json(
-            ['data' => 'UnAuthenticated'],
-            Response::HTTP_UNAUTHORIZED
-        );
+        return ['data' => 'UnAuthenticated'];
     }
 
 }

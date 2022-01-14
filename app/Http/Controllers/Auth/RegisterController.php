@@ -3,37 +3,28 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Services\AuthenticateService;
 use Illuminate\Http\Request;
+use App\Services\AuthenticateService;
+use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class RegisterController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Register Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles the registration of new users as well as their
-    | validation and creation. By default this controller uses a trait to
-    | provide this functionality without requiring any additional code.
-    |
-    */
 
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $response = AuthenticateService::register($request);
-        if ($response) {
-            return response()->json($response,Response::HTTP_UNAUTHORIZED);
+        if (array_key_exists('registered', $response)) {
+            return response()->json(['data' => 'Confirm your email!'],Response::HTTP_OK);
         }
-        return response()->json(['data' => 'Confirm your email!'],Response::HTTP_OK);
+        return response()->json($response,Response::HTTP_UNAUTHORIZED);
     }
 
-    public function verify(Request $request)
+    public function verify(Request $request): JsonResponse
     {
         $response = AuthenticateService::verifyEmail($request);
-        if (is_object($response)) {
-            return $response;
+        if (array_key_exists('confirmed', $response)) {
+            return response()->json(['data' => 'Email confirmed'],Response::HTTP_OK);
         }
         return response()->json($response,Response::HTTP_UNAUTHORIZED);
     }

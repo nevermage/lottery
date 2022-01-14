@@ -18,7 +18,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('register', 'App\Http\Controllers\Auth\RegisterController@register');
     Route::get('verify', 'App\Http\Controllers\Auth\RegisterController@verify');
     Route::post('login', 'App\Http\Controllers\Auth\LoginController@login');
-    Route::post('logout', 'App\Http\Controllers\Auth\LoginController@logout');
     Route::post('join/{id}', 'App\Http\Controllers\LotController@joinLot');
 
     Route::get('check-user', 'App\Http\Controllers\Auth\LoginController@checkUser');
