@@ -30,4 +30,22 @@ class LoginController extends Controller
         return response()->json($response, Response::HTTP_UNAUTHORIZED);
     }
 
+    public function passwordResetRequestMail(Request $request): JsonResponse
+    {
+        $response = AuthenticateService::passwordResetRequestMail($request);
+        if (array_key_exists('error', $response)) {
+            return response()->json($response, Response::HTTP_BAD_REQUEST);
+        }
+        return response()->json(['data' => 'Check your email'], Response::HTTP_OK);
+    }
+
+    public function passwordReset(Request $request): JsonResponse
+    {
+        $response = AuthenticateService::passwordReset($request);
+        if (!array_key_exists('set', $response)) {
+            return response()->json($response, Response::HTTP_BAD_REQUEST);
+        }
+        return response()->json(['data' => 'Password updated!'], Response::HTTP_OK);
+    }
+
 }

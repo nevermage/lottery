@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\PasswordReset;
 use App\Models\User;
 use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
@@ -136,6 +137,38 @@ class AuthenticateService
             return $user;
         }
         return ['data' => 'UnAuthenticated'];
+    }
+
+    public static function passwordResetRequestMail(Request $request): array
+    {
+        $user = User::get()->where('email', '=', $request->email);
+        if ($user->count() === 0) {
+            return ['error' => 'No users with this email'];
+        }
+        if ($user->first()->email_verified_at === null) {
+            return ['error' => 'Verify your email first!'];
+        }
+        $token = $user->first()->api_token;
+
+        Mail::to($request->email)->send(new PasswordReset($token));
+
+        return ['sent' => true];
+    }
+
+    public static function passwordReset(Request $request): array
+    {
+        $user = User::get()->where('api_token', '=', $request->token);
+        if ($user->count() === 0) {
+            return ['error' => 'No users with this token'];
+        }
+        $request->validate(['password' => 'required|min:8']);
+
+        if ($user->first()->password === $request->password) {
+            return ['error' => 'Your password is the same as old one'];
+        }
+        User::findOrFail($user->first()->id)->update(['password' => $request->password]);
+
+        return ['set' => true];
     }
 
 }
