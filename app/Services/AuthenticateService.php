@@ -32,8 +32,8 @@ class AuthenticateService
         if ($user === null) {
             return ['data' => 'This email dont match our records'];
         }
-        if ($user['password'] === $request->password) {
-            return self::generateToken($request->email, $request->password);
+        if (Hash::check($request->password, $user['password'])) {
+            return self::generateToken($request->email, $user['password']);
         }
         return ['data' => 'Password is incorrect'];
     }
@@ -66,7 +66,7 @@ class AuthenticateService
         User::create([
             'name' => $request['name'],
             'email' => $request['email'],
-            'password' => $request['password'],
+            'password' => Hash::make($request['password']),
             'api_token' => $hash
         ]);
 
@@ -183,7 +183,7 @@ class AuthenticateService
 
         $user = User::where('email', '=', $payload['email'])->first();
         if ($user === null) {
-            $password = str_random(48);
+            $password = Hash::make(str_random(48));
             User::create([
                 'name' => $payload['given_name'],
                 'email' => $payload['email'],
