@@ -48,4 +48,13 @@ class LoginController extends Controller
         return response()->json(['data' => 'Password updated!'], Response::HTTP_OK);
     }
 
+    public function googleLogin(Request $request): JsonResponse
+    {
+        $response = AuthenticateService::googleLogin($request);
+        if (array_key_exists('token', $response)) {
+            return response()->json($response['token'], Response::HTTP_OK);
+        }
+        return response()->json($response, Response::HTTP_UNAUTHORIZED);
+    }
+
 }

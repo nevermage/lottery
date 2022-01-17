@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Verification;
 use Illuminate\Support\Carbon;
+use Google_Client;
 
 class AuthenticateService
 {
@@ -32,7 +33,7 @@ class AuthenticateService
             return ['data' => 'This email dont match our records'];
         }
         if ($user['password'] === $request->password) {
-            return ['token' => JWT::encode($request->all(), "secret")];
+            return self::generateToken($request->email, $request->password);
         }
         return ['data' => 'Password is incorrect'];
     }
@@ -171,6 +172,38 @@ class AuthenticateService
         return ['set' => true];
     }
 
+    public static function googleLogin(Request $request): array
+    {
+        $token = $request->token;
+        $client = new Google_Client();
+        $payload = $client->verifyIdToken($token);
+        if (!$payload) {
+            return ['error' => 'invalid token'];
+        }
+
+        $user = User::where('email', '=', $payload['email'])->first();
+        if ($user === null) {
+            $password = str_random(48);
+            User::create([
+                'name' => $payload['given_name'],
+                'email' => $payload['email'],
+                'password' => $password,
+                'email_verified_at' => Carbon::now(),
+                'image_path' => $payload['picture'] ?? null
+            ]);
+            return self::generateToken($payload['email'], $password);
+        }
+        return self::generateToken($user->email, $user->password);
+    }
+
+    public static function generateToken(string $email, string $password): array
+    {
+        $credentials = [
+            'email' => $email,
+            'password' => $password,
+        ];
+        return ['token' => JWT::encode($credentials, env('JWT_CODING_PASSWORD'))];
+    }
 }
 
 
