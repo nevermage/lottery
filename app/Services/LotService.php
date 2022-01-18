@@ -36,7 +36,8 @@ class LotService
                 (select name from users where id = creator_id) as creator,
                 (select name from users where id = winner_id) as winner,
                 lots.image_path, description,
-                roll_time, winner_id
+                (select timestampdiff(second, now(), roll_time)) as roll_time,
+                winner_id
             from lots
             where lots.id = $id
         ;");
