@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\Verification;
 use Illuminate\Support\Carbon;
 use Google_Client;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticateService
 {
@@ -174,24 +175,41 @@ class AuthenticateService
 
     public static function googleLogin(Request $request): array
     {
-        $token = $request->token;
         $client = new Google_Client();
-        $payload = $client->verifyIdToken($token);
+        $payload = $client->verifyIdToken($request->token);
+
         if (!$payload) {
             return ['error' => 'invalid token'];
         }
 
-        $user = User::where('email', '=', $payload['email'])->first();
+        return self::identifyViaSocial($payload['email'], $payload['given_name'], $payload['picture'] ?? null);
+    }
+
+    public static function facebookLogin(Request $request): array
+    {
+        $driver= Socialite::driver('facebook');
+        $payload = $driver->userFromToken($request->token);
+        if (!$payload) {
+            return ['error' => 'invalid token'];
+        }
+        $email = $payload->id . '@facebook';
+
+        return self::identifyViaSocial($email, $payload->name, $payload->avatar ?? null);
+    }
+
+    public static function identifyViaSocial(string $email, string $name, $image): array
+    {
+        $user = User::where('email', '=', $email)->first();
         if ($user === null) {
             $password = Hash::make(str_random(48));
             User::create([
-                'name' => $payload['given_name'],
-                'email' => $payload['email'],
+                'name' => $name,
+                'email' => $email,
                 'password' => $password,
                 'email_verified_at' => Carbon::now(),
-                'image_path' => $payload['picture'] ?? null
+                'image_path' => $image
             ]);
-            return self::generateToken($payload['email'], $password);
+            return self::generateToken($email, $password);
         }
         return self::generateToken($user->email, $user->password);
     }

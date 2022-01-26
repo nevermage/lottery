@@ -57,4 +57,13 @@ class LoginController extends Controller
         return response()->json($response, Response::HTTP_UNAUTHORIZED);
     }
 
+    public function facebookLogin(Request $request): JsonResponse
+    {
+        $response = AuthenticateService::facebookLogin($request);
+        if (array_key_exists('token', $response)) {
+            return response()->json($response['token'], Response::HTTP_OK);
+        }
+        return response()->json($response, Response::HTTP_UNAUTHORIZED);
+    }
+
 }
