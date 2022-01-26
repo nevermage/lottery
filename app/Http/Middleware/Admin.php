@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\HttpResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Closure;
 use Illuminate\Http\Request;
 use App\Services\AuthenticateService;
@@ -24,7 +24,7 @@ class Admin
         }
         return response()->json(
             ['data' => 'UnAuthenticated'],
-            HttpResponse::HTTP_UNAUTHORIZED
+            Response::HTTP_UNAUTHORIZED
         );
     }
 }
