@@ -11,6 +11,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('password-reset-mail', 'App\Http\Controllers\Auth\LoginController@passwordResetRequestMail');
     Route::post('password-reset', 'App\Http\Controllers\Auth\LoginController@passwordReset');
     Route::get('google-login', 'App\Http\Controllers\Auth\LoginController@googleLogin');
+    Route::get('facebook-login', 'App\Http\Controllers\Auth\LoginController@facebookLogin');
     Route::get('check-user', 'App\Http\Controllers\Auth\LoginController@checkUser');
 
     Route::get('users', 'App\Http\Controllers\UserController@getAll');
