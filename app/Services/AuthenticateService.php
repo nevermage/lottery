@@ -165,10 +165,11 @@ class AuthenticateService
         }
         $request->validate(['password' => 'required|min:8']);
 
-        if ($user->first()->password === $request->password) {
+        if (Hash::check($request->password, $user->first()->password)) {
             return ['error' => 'Your password is the same as old one'];
         }
-        User::findOrFail($user->first()->id)->update(['password' => $request->password]);
+        User::findOrFail($user->first()->id)
+            ->update(['password' => Hash::make($request->password)]);
 
         return ['set' => true];
     }
