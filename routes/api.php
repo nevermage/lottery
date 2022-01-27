@@ -8,7 +8,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('verify', 'App\Http\Controllers\Auth\RegisterController@verify');
     Route::post('login', 'App\Http\Controllers\Auth\LoginController@login');
     Route::post('join/{id}', 'App\Http\Controllers\LotController@joinLot');
-    Route::post('password-reset-mail', 'App\Http\Controllers\Auth\LoginController@passwordResetRequestMail');
+    Route::get('password-reset-mail', 'App\Http\Controllers\Auth\LoginController@passwordResetRequestMail');
     Route::post('password-reset', 'App\Http\Controllers\Auth\LoginController@passwordReset');
     Route::get('google-login', 'App\Http\Controllers\Auth\LoginController@googleLogin');
     Route::get('facebook-login', 'App\Http\Controllers\Auth\LoginController@facebookLogin');
