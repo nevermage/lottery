@@ -45,10 +45,10 @@ class LotController extends Controller
     public function create(Request $request): JsonResponse
     {
         $response = LotService::create($request);
-        if (array_key_exists('data', $response)) {
-            return response()->json($response, Response::HTTP_BAD_REQUEST);
+        if (array_key_exists('created', $response)) {
+            return response()->json(['data' => 'Lot was created'], Response::HTTP_CREATED);
         }
-        return response()->json(['data' => $response, Response::HTTP_CREATED]);
+        return response()->json($response, Response::HTTP_BAD_REQUEST);
     }
 
     public function update(Request $request, int $id): JsonResponse

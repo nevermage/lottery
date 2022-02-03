@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\LotUser;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class LotService
 {
@@ -135,6 +136,18 @@ class LotService
         return ['validated' => true];
     }
 
+    public static function createFile(Request $request, int $id): ?string
+    {
+        if ($request->hasFile('imageFile')) {
+            return Storage::putFile(
+                "lots/$id",
+                $request->file('imageFile'),
+                'public'
+            );
+        }
+        return null;
+    }
+
     public static function create(Request $request): array
     {
         $validationResponse = self::createValidation($request);
@@ -147,12 +160,15 @@ class LotService
             'creator_id' => AuthenticateService::getUserId($request),
             'status' => 'unmoderated',
             'description' => $request['description'] ?: null,
-            'image_path' => $request['image_path'] ?: null,
         ];
+        $newLot = Lot::create($lotData);
+        $filePath = self::createFile($request, $newLot->id);
+        if ($filePath !== null) {
+            $lot = Lot::findOrFail($newLot->id);
+            $lot->update(['image_path' => $filePath]);
+        }
 
-        Lot::create($lotData);
-
-        return ['data' => 'Lot was created'];
+        return ['created' => true];
     }
 
     private static function updateValidation(Request $request, int $id): array
