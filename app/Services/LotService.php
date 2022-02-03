@@ -33,7 +33,7 @@ class LotService
     {
         return DB::select("
             select
-                lots.id, lots.name ,
+                lots.id, lots.name , creator_id,
                 (select name from users where id = creator_id) as creator,
                 (select name from users where id = winner_id) as winner,
                 lots.image_path, description,
