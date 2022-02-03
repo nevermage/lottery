@@ -24,7 +24,12 @@ class UserService
     public static function winners()
     {
         return DB::table('lots')
-            ->select('users.id', 'users.name', 'lots.name AS lot', 'lots.id AS lid')
+            ->select(
+                'users.id', 'users.name',
+                'lots.name AS lot', 'lots.id AS lid',
+                'lots.image_path as lotImage',
+                'users.image_path as userImage'
+            )
             ->join('users', 'lots.winner_id', '=', 'users.id')
             ->whereNotNull('winner_id')
             ->get();
