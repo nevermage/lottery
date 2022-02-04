@@ -38,7 +38,7 @@ class LotService
                 (select name from users where id = winner_id) as winner,
                 lots.image_path, description,
                 (select timestampdiff(second, now(), roll_time)) as roll_time,
-                winner_id
+                winner_id, status
             from lots
             where lots.id = $id
         ;");
@@ -202,6 +202,16 @@ class LotService
         }
 
         $data = $request->all();
+
+        if($request->imageFile === 'null') {
+            $data += ['image_path' => null];
+        } else {
+            $imagePath = self::createFile($request, $id);
+            if ($imagePath !== null) {
+                $data += ['image_path' => $imagePath];
+            }
+        }
+
         if (isset($data['roll_time'])) {
             $data += ['status' => 'active'];
         }

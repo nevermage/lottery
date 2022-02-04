@@ -23,7 +23,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('lots', 'App\Http\Controllers\LotController@getActive');
     Route::get('lot/{id}', 'App\Http\Controllers\LotController@getById');
     Route::post('create', 'App\Http\Controllers\LotController@create');
-    Route::put('update/{id}', 'App\Http\Controllers\LotController@update');
+    Route::post('update/{id}', 'App\Http\Controllers\LotController@update');
 
 });
 
