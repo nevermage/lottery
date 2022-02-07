@@ -6,7 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Post
+ *
+ * @mixin Builder
+ */
 class Lot extends Model
 {
     use HasApiTokens, HasFactory, Notifiable;
