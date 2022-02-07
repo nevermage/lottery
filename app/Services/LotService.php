@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Middleware\Auth;
 use App\Mail\WinNotification;
 use App\Models\User;
 use App\Models\Lot;
@@ -29,6 +30,15 @@ class LotService
             ->toArray();
     }
 
+    public static function myLots(Request $request): array
+    {
+        $uid = AuthenticateService::getUserId($request);
+        if ($uid === null) {
+            return ['error' => 'UnAuthenticated'];
+        }
+        return Lot::where('creator_id', $uid)->get()->toArray();
+    }
+
     public static function getById(int $id): array
     {
         return DB::select("
@@ -37,7 +47,8 @@ class LotService
                 (select name from users where id = creator_id) as creator,
                 (select name from users where id = winner_id) as winner,
                 lots.image_path, description,
-                (select timestampdiff(second, now(), roll_time)) as roll_time,
+                roll_time,
+                (select timestampdiff(second, now(), roll_time)) as roll_timer,
                 winner_id, status
             from lots
             where lots.id = $id
@@ -187,11 +198,62 @@ class LotService
         if ($lot['creator_id'] !== $uid) {
             return ['data' => 'user is not owner of lot'];
         }
-        if ($lot['status'] !== 'accepted') {
+        if ($lot['status'] !== 'accepted' && $lot['status'] !== 'unmoderated') {
             return ['data' => 'unable to update lot'];
         }
 
         return ['validated' => true];
+    }
+
+    public static function setTimeValidation(Request $request, $id): array
+    {
+        $userId = AuthenticateService::getUserId($request);
+        if ($userId === null) {
+            return ['error' => 'UnAuthenticated'];
+        }
+
+        $request->validate([
+            'time' => 'required|date_format:Y-m-d H:i:s|after:tomorrow'
+        ]);
+
+        $lotFinder = Lot::where('id', '=', $id)->count();
+        if ($lotFinder === 0) {
+            return ['error' => 'Incorrect request data'];
+        }
+
+        $lot = Lot::findOrFail($id);
+        if ($lot->creator_id !== $userId) {
+            return ['error' => 'User in not owner of lot'];
+        }
+
+        if ($lot->status !== 'accepted') {
+            return ['error' => 'Unable to launch lot'];
+        }
+
+        return ['validated' => true];
+    }
+
+    public static function setRollTime(Request $request, int $id): array
+    {
+        $validationData = self::setTimeValidation($request, $id);
+        if (!array_key_exists('validated', $validationData)) {
+            return $validationData;
+        }
+
+        $lot = Lot::findOrFail($id);
+        $lot->update([
+            'roll_time' => $request->time,
+            'status' => 'active'
+        ]);
+
+        return ['set' => true];
+    }
+
+    public static function filerUpdateData(array $data): array
+    {
+        $whitelist = ['name', 'description'];
+
+        return array_intersect_key($data, array_flip($whitelist));
     }
 
     public static function update(Request $request, int $id): array
@@ -201,7 +263,9 @@ class LotService
             return $validationResponse;
         }
 
-        $data = $request->all();
+        $unfilteredData = $request->all();
+
+        $data = self::filerUpdateData($unfilteredData);
 
         if($request->imageFile === 'null') {
             $data += ['image_path' => null];
@@ -212,9 +276,7 @@ class LotService
             }
         }
 
-        if (isset($data['roll_time'])) {
-            $data += ['status' => 'active'];
-        }
+        $data += ['status' => 'unmoderated'];
 
         Lot::findOrFail($id)->update($data);
 

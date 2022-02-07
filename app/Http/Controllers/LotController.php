@@ -60,4 +60,22 @@ class LotController extends Controller
         return response()->json($response, Response::HTTP_BAD_REQUEST);
     }
 
+    public function myLots(Request $request): JsonResponse
+    {
+        $response = LotService::myLots($request);
+        if (array_key_exists('error', $response)) {
+            return response()->json($response, Response::HTTP_BAD_REQUEST);
+        }
+        return response()->json($response, Response::HTTP_OK);
+    }
+
+    public function setRollTime(Request $request, int $id): JsonResponse
+    {
+        $response = LotService::setRollTime($request, $id);
+        if (array_key_exists('set', $response)) {
+            return response()->json(['data' => 'Time was set'], Response::HTTP_OK);
+        }
+        return response()->json($response, Response::HTTP_BAD_REQUEST);
+    }
+
 }

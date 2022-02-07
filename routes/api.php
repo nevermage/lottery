@@ -18,12 +18,14 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('user/{id}', 'App\Http\Controllers\UserController@getById');
     Route::get('lots-won-by/{id}', 'App\Http\Controllers\LotController@wonById');
     Route::get('lots-created-by/{id}', 'App\Http\Controllers\LotController@createdById');
+    Route::get('my-lots', 'App\Http\Controllers\LotController@myLots');
     Route::get('winners', 'App\Http\Controllers\UserController@winners');
 
     Route::get('lots', 'App\Http\Controllers\LotController@getActive');
     Route::get('lot/{id}', 'App\Http\Controllers\LotController@getById');
     Route::post('create', 'App\Http\Controllers\LotController@create');
     Route::post('update/{id}', 'App\Http\Controllers\LotController@update');
+    Route::post('set-roll-time/{id}', 'App\Http\Controllers\LotController@setRollTime');
 
 });
 
