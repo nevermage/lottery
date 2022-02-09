@@ -150,11 +150,8 @@ class LotService
     public static function createFile(Request $request, int $id): ?string
     {
         if ($request->hasFile('imageFile')) {
-            return Storage::putFile(
-                "lots/$id",
-                $request->file('imageFile'),
-                'public'
-            );
+            Storage::cloud()->deleteDirectory("lots/$id");
+            return Storage::cloud()->put("lots/$id", $request->file('imageFile'));
         }
         return null;
     }
@@ -269,6 +266,7 @@ class LotService
 
         if($request->imageFile === 'null') {
             $data += ['image_path' => null];
+            Storage::cloud()->deleteDirectory("lots/$id");
         } else {
             $imagePath = self::createFile($request, $id);
             if ($imagePath !== null) {
@@ -306,7 +304,6 @@ class LotService
             Mail::to($lot['email'])
                 ->send(new WinNotification($lot['winner'], $lot['id'], $lot['name']));
         }
-
     }
 
 }
