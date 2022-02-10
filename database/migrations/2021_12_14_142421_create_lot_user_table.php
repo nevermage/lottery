@@ -14,6 +14,7 @@ class CreateLotUserTable extends Migration
     public function up()
     {
         Schema::create('lot_user', function (Blueprint $table) {
+            $table->id();
             $table->integer('lot_id');
             $table->integer('user_id');
             $table->timestamps();
