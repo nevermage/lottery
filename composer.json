@@ -9,7 +9,6 @@
     "license": "MIT",
     "require": {
         "php": "^7.3|^8.0",
-        "aws/aws-sdk-php": "^3.208",
         "fruitcake/laravel-cors": "^2.0",
         "google/apiclient": "^2.12",
         "guzzlehttp/guzzle": "^7.4",
@@ -24,11 +23,13 @@
     "require-dev": {
         "codeception/codeception": "^4.1",
         "codeception/module-asserts": "^1.0.0",
+        "codeception/module-db": "^2.0",
+        "codeception/module-laravel5": "^1.1",
         "codeception/module-phpbrowser": "^1.0.0",
         "codeception/module-rest": "^2.0",
         "facade/ignition": "^2.5",
         "fakerphp/faker": "^1.9.1",
-        "laravel/sail": "^1.0.1",
+        "laravel/sail": "^1.13",
         "mockery/mockery": "^1.4.4",
         "nunomaduro/collision": "^5.10",
         "phpunit/phpunit": "^9.5.10"

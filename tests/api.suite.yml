@@ -1,7 +1,22 @@
 actor: ApiTester
 modules:
     enabled:
+        - Asserts
         - \Helper\Api
+        - Laravel5:
+              part: ORM
+              run_database_migrations: true
+              cleanup: false
         - REST:
-            url: http://localhost:80/api/
-            depends: PhpBrowser
+            depends: Laravel5
+            url: http://localhost/api/
+        - Db:
+            dsn: 'mysql:host=mysql;dbname=example_app'
+            user: 'sail'
+            password: 'password'
+
+    config:
+        PhpBrowser:
+            url: http://localhost/api/
+            headers:
+                Content-Type: application/json
