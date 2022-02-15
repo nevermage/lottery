@@ -1,0 +1,33 @@
+image: solutiondrive/php-composer:php8.0
+
+before_script:
+  - composer self-update --2
+  - composer install
+
+services:
+  - mysql:5.7
+
+variables:
+  MYSQL_DATABASE: "example_app"
+  MYSQL_ROOT_PASSWORD: "rootroot"
+  MYSQL_USER: "sail"
+  MYSQL_PASSWORD: "password"
+  MYSQL_HOST: mysql
+
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+    - composer validate
+    - composer dump-autoload
+    - php artisan optimize
+    - cp .env.testing .env
+    - cat .env
+    - php artisan config:clear
+    - php artisan key:generate
+    - php artisan migrate
+    - php artisan db:seed
+    - vendor/bin/codecept build
+    - vendor/bin/codecept run api --debug

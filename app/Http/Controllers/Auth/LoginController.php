@@ -16,7 +16,7 @@ class LoginController extends Controller
         $response = AuthenticateService::login($request);
 
         if (array_key_exists('token', $response)) {
-            return response()->json($response['token'], Response::HTTP_OK);
+            return response()->json($response, Response::HTTP_OK);
         }
         return response()->json($response, Response::HTTP_UNAUTHORIZED);
     }
@@ -52,7 +52,7 @@ class LoginController extends Controller
     {
         $response = AuthenticateService::googleLogin($request);
         if (array_key_exists('token', $response)) {
-            return response()->json($response['token'], Response::HTTP_OK);
+            return response()->json($response, Response::HTTP_OK);
         }
         return response()->json($response, Response::HTTP_UNAUTHORIZED);
     }
@@ -61,7 +61,7 @@ class LoginController extends Controller
     {
         $response = AuthenticateService::facebookLogin($request);
         if (array_key_exists('token', $response)) {
-            return response()->json($response['token'], Response::HTTP_OK);
+            return response()->json($response, Response::HTTP_OK);
         }
         return response()->json($response, Response::HTTP_UNAUTHORIZED);
     }

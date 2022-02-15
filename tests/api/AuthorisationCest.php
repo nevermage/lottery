@@ -1,5 +1,7 @@
 <?php
 
+use Symfony\Component\HttpFoundation\Response;
+
 class AuthorisationCest
 {
     public function _before(ApiTester $I)
@@ -7,21 +9,33 @@ class AuthorisationCest
     }
 
     // tests
-    public function testUnAuthUser(ApiTester $I)
+    public function testLogin(ApiTester $I)
     {
-        $I->sendGet('/check-user');
-        $I->seeResponseCodeIs(401);
+        $I->sendGet('check-user');
+        $I->seeResponseCodeIs(Response::HTTP_UNAUTHORIZED);
         $I->seeResponseIsJson();
         $I->seeResponseContains('{"data":"UnAuthenticated"}');
     }
 
-    public function testAuthUser(ApiTester $I)
+    public function testCheckUser(ApiTester $I)
     {
-        $bearerToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IkJpbGwuSGFtQGdtYWlsLmNvbSIsInBhc3N3b3JkIjoiJDJ5JDEwJFBrOFI3TlhraTBcLzE2endJdlpZWjFlRThXYmhxQ1A2U0Q2ZU9TZlNKa2lJUTdNU1VjR0pscSJ9.cjrctCv8Wbll_1Fz6n2kx1SzsBYTKG9vFqubg-jBsuM';
+        $username = 'username';
+        $email = 'user@gmail.com';
+        $password = 'password';
+
+        $I->createUser($username, $email, $password);
+
+        $I->sendPost('login', [
+            'email' => $email,
+            'password' => $password
+        ]);
+        $I->seeResponseCodeIs(Response::HTTP_OK);
+        $I->seeResponseMatchesJsonType(['token' => 'string']);
+        $bearerToken = json_decode($I->grabResponse(), true)['token'];
+
         $I->haveHttpHeader('Authorization', 'Bearer ' . $bearerToken);
-        $I->sendGet('/check-user');
+        $I->sendGet('check-user');
         $I->seeResponseCodeIs(200);
-        $I->seeResponseIsJson();
         $I->seeResponseMatchesJsonType([
             'id' => 'integer',
             'name' => 'string',
@@ -30,8 +44,7 @@ class AuthorisationCest
             'role_id' => 'integer',
             'created_at' => 'string:date',
             'updated_at' => 'string:date',
-            'email_verified_at' => 'string:date',
+            'email_verified_at' => 'string:date|null',
         ]);
-
     }
 }
