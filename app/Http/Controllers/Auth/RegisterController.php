@@ -17,7 +17,7 @@ class RegisterController extends Controller
         if (array_key_exists('registered', $response)) {
             return response()->json(['data' => 'Confirm your email!'],Response::HTTP_OK);
         }
-        return response()->json($response,Response::HTTP_UNAUTHORIZED);
+        return response()->json($response,Response::HTTP_BAD_REQUEST);
     }
 
     public function verify(Request $request): JsonResponse
@@ -26,7 +26,7 @@ class RegisterController extends Controller
         if (array_key_exists('confirmed', $response)) {
             return response()->json(['data' => 'Email confirmed'],Response::HTTP_OK);
         }
-        return response()->json($response,Response::HTTP_UNAUTHORIZED);
+        return response()->json($response,Response::HTTP_BAD_REQUEST);
     }
 
 }

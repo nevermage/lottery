@@ -20,3 +20,10 @@ modules:
             url: http://localhost/api/
             headers:
                 Content-Type: application/json
+
+coverage:
+    enabled: true
+    include:
+        - app/*
+    exclude:
+        - app/Providers/*

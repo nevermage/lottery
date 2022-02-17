@@ -30,7 +30,7 @@ class AdminService
 
     public static function getUsers()
     {
-        return User::get();
+        return User::get()->makeHidden('password');
     }
 
     public static function updateUser(Request $request, int $id): array
