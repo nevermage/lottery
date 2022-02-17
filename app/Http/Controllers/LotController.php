@@ -15,10 +15,13 @@ class LotController extends Controller
         return response()->json($lots, Response::HTTP_OK);
     }
 
-    public function getById(int $id): JsonResponse
+    public function getById(Request $request, int $id): JsonResponse
     {
-        $lot = LotService::getById($id);
-        return response()->json($lot, Response::HTTP_OK);
+        $response = LotService::getById($request, $id);
+        if (array_key_exists('error', $response)) {
+            return response()->json($response, Response::HTTP_METHOD_NOT_ALLOWED);
+        }
+        return response()->json($response, Response::HTTP_OK);
     }
 
     public function joinLot(Request $request, int $id): JsonResponse
@@ -27,7 +30,7 @@ class LotController extends Controller
         if (array_key_exists('added', $response)) {
             return response()->json(['data' => 'User joined'], Response::HTTP_OK);
         }
-        return response()->json($response, Response::HTTP_UNAUTHORIZED);
+        return response()->json($response, Response::HTTP_BAD_REQUEST);
     }
 
     public function createdById(int $id): JsonResponse

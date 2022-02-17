@@ -23,18 +23,18 @@ class AuthenticateService
             'email' => 'required|email',
             'password' => 'required|min:8',
         ]);
-        return self::loginAttempt($request);
+        return self::loginAttempt($request->email, $request->password);
     }
 
 
-    private static function loginAttempt(Request $request): array
+    public static function loginAttempt(string $email, string $password): array
     {
-        $user = User::get()->where('email', $request->email)->first();
+        $user = User::get()->where('email', $email)->first();
         if ($user === null) {
             return ['data' => 'This email dont match our records'];
         }
-        if (Hash::check($request->password, $user['password'])) {
-            return self::generateToken($request->email, $user['password']);
+        if (Hash::check($password, $user['password'])) {
+            return self::generateToken($email, $user['password']);
         }
         return ['data' => 'Password is incorrect'];
     }
@@ -198,7 +198,7 @@ class AuthenticateService
         return self::identifyViaSocial($email, $payload->name, $payload->avatar ?? null);
     }
 
-    public static function identifyViaSocial(string $email, string $name, $image): array
+    private static function identifyViaSocial(string $email, string $name, $image): array
     {
         $user = User::where('email', '=', $email)->first();
         if ($user === null) {
@@ -215,7 +215,7 @@ class AuthenticateService
         return self::generateToken($user->email, $user->password);
     }
 
-    public static function generateToken(string $email, string $password): array
+    private static function generateToken(string $email, string $password): array
     {
         $credentials = [
             'email' => $email,

@@ -39,8 +39,24 @@ class LotService
         return Lot::where('creator_id', $uid)->get()->toArray();
     }
 
-    public static function getById(int $id): array
+    private static function getLotValidation(Request $request, $lotId): bool
     {
+        $userId = AuthenticateService::getUserId($request);
+        $lot = Lot::findOrFail($lotId);
+        if ($lot->creator_id === $userId) {
+            return true;
+        }
+        if ($lot->status === 'active' || $lot->status === 'expired') {
+            return true;
+        }
+        return false;
+    }
+
+    public static function getById(Request $request, int $id): array
+    {
+        if (self::getLotValidation($request, $id) === false) {
+            return ['error' => 'Unable to get lot'];
+        }
         return DB::select("
             select
                 lots.id, lots.name , creator_id,
@@ -147,7 +163,7 @@ class LotService
         return ['validated' => true];
     }
 
-    public static function createFile(Request $request, int $id): ?string
+    private static function createFile(Request $request, int $id): ?string
     {
         if ($request->hasFile('imageFile')) {
             Storage::cloud()->deleteDirectory("lots/$id");
@@ -246,7 +262,7 @@ class LotService
         return ['set' => true];
     }
 
-    public static function filerUpdateData(array $data): array
+    private static function filerUpdateData(array $data): array
     {
         $whitelist = ['name', 'description'];
 
